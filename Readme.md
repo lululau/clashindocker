@@ -38,33 +38,28 @@ sudo systemctl restart docker
          -o macvlan_mode=bridge macnet
 ```    
 注意看含义，有的值需要变
-# 制作docker镜像
-1. 准备docker-compose.yml
-```yaml
-version: '3.3'
-services:
-    testclash:
-        restart: unless-stopped
-        container_name: ruiclash
-        networks:
-                macnet:
-                        ipv4_address: 192.168.3.23
-        privileged: true
-        build:
-                context: .
-                dockerfile: Dockerfile
-        volumes:
-            - './config.yml:/opt/clash/config.yml'
-networks:
-        macnet:
-                external: true
+# 制作docker镜像并创建容器
+1. 获取代码
+```bash
+https://github.com/UntaggedRui/clashindocker
+cd clashindocker
+cp example.yml config.yml
 ```
-其中`ipv4_address: 192.168.3.23` 为容器的ip,这个ip可以自己更改.
 
-其中`config.yml`为机场提供的clash配置文件.可以参考[example.yml](./example.yml)来使用`proxy-provider`和`rule-providers`来实现远端配置. 你只需要在`proxy-providers`的`url`中填写你的机场的订阅地址.示例中是两个机场的情况.如果只有一个机场,删除其中一个和下面`proxy-groups`对应的部分即可.
+2. 更改地址`docker-compose.yml`中的`ipv4_address`为你的ip地址.
 
+3. 更改`config.yml`中的`proxy-provider`的`url`为你的机场订阅地址.
 
-这个配置文件中需要注意以下几点.
+4. 启动容器
+```bash
+docker compose up -d 
+```
+
+5. 假设你的docker容器ip地址为`192.168.3.23`. 通过`http://192.168.3.23:9090/ui/`可以管理clash,进行切换节点等.后端地址为`http://192.168.3.23:9090/`,密码为`yourpassword`.
+
+6. 在同一个局域网下,将其他机器的网关设置为`192.168.3.23`就可以实现该机器的所有流量都经过clash,并且根据clash的规则进行分流.
+
+7. 可以不看的说明. [example.yml](./example.yml)中使用`proxy-provider`和`rule-providers`来实现远端配置. 示例中是两个机场的情况.如果只有一个机场,删除其中一个和下面`proxy-groups`对应的部分即可.这个配置文件中需要注意以下几点.
 
 + 配置`redir-port`来让clash能够处理请求.
 ```yaml
@@ -78,13 +73,5 @@ external-ui: ui
 # RESTful API 的口令
 secret: 'yourpassword'
 ```
-
-
-3. 启动容器
-```bash
-docker compose up -d 
-```
-4. 通过`http://192.168.3.23:9090/ui/`可以管理clash,进行切换节点等.
-5. 在同一个局域网下,将其他机器的网关设置为`192.168.3.23`就可以实现该机器的所有流量都经过clash,并且根据clash的规则进行分流.
 
 如果有无法使用的欢迎在issue中讨论.
