@@ -1,0 +1,17 @@
+version: '3.3'
+services:
+    clashindocker:
+        restart: unless-stopped
+        container_name: dockerclash
+        networks:
+                macnet:
+                        ipv4_address: 192.168.3.23
+        privileged: true
+        build:
+                context: .
+                dockerfile: Dockerfile
+        volumes:
+            - './config.yml:/opt/clash/config.yml'
+networks:
+        macnet:
+                external: true

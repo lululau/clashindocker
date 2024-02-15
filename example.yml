@@ -1,0 +1,298 @@
+######### 锚点 start #######
+# proxy 相关
+pr: &pr {type: select, proxies: [默认,香港,台湾,日本,新加坡,美国,其它地区,全部节点,自动选择,DIRECT]}
+
+#这里是订阅更新和延迟测试相关的
+p: &p {type: http, interval: 86400, health-check: {enable: true, url: https://www.gstatic.com/generate_204, interval: 36000}}
+
+selectall: &select-all
+  type: select
+  use:
+  - allnodes
+######### 锚点 end #######
+
+urltestall: &urltest-all
+  type: url-test
+  url: 'http://www.gstatic.com/generate_204'
+  interval: 300
+  lazy: true
+  use:
+    - allnodes
+
+loadbalanceall: &loadbalance-all
+  type: load-balance
+  use:
+    - allnodes
+  url: 'http://www.gstatic.com/generate_204'
+  interval: 300
+  lazy: true
+  strategy: round-robin # or consistent-hashing
+
+urltestinterval: &urltest-interval
+  type: url-test
+  url: 'http://www.gstatic.com/generate_204'
+  interval: 300
+  lazy: true
+  use:
+    - allnodes
+# url 里填写自己的订阅,名称不能重复,path（文件位置）不能重复
+proxy-providers:
+  
+  jichang1:
+    <<: *p
+    path: ./proxy_providers/1.yaml
+    url: https://sub2.smallstrawberry.com/api/v1/client/subscribe?token=74b2fdsdfsdc3b2d7af62&flag=clash
+  
+  jichang2:
+    <<: *p
+    path: ./proxy_providers/2.yaml
+    url: https://xn--4gq62f52gdss.com/api/v1/client/subscribe?token=74b25aa12d46xxxaf62&flag=clash
+
+mode: rule
+ipv6: false
+log-level: info
+allow-lan: true
+mixed-port: 7890
+redir-port: 7892 
+unified-delay: false
+tcp-concurrent: true
+
+external-controller: 0.0.0.0:9090
+external-ui: ui
+secret: "youpassword"
+
+# authentication: # http,socks入口的验证用户名，密码
+#   - "user:password"
+# skip-auth-prefixes: # 设置跳过验证的IP段
+#   - 127.0.0.1/8
+#   - ::1/128
+#   - 10.144.32.0/24
+#   - 10.156.43.0/24
+
+geodata-mode: true
+geox-url:
+  geoip: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+
+find-process-mode: strict
+global-client-fingerprint: chrome
+
+profile:
+  store-selected: true
+  store-fake-ip: true
+
+sniffer:
+  enable: true
+  sniff:
+    TLS:
+      ports: [443, 8443]
+    HTTP:
+      ports: [80, 8080-8880]
+      override-destination: true
+
+tun:
+  enable: false
+  stack: system
+  dns-hijack:
+    - 'any:1053'
+  auto-route: true
+  auto-detect-interface: true
+
+dns:
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:1053
+  enhanced-mode: redir-host
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - "*.lan"
+    - localhost.ptlogin2.qq.com
+  nameserver:
+    - 223.5.5.5
+    - 180.76.76.76
+    - 119.29.29.29
+    - 117.50.11.11
+    - 117.50.10.10
+    - 114.114.114.114
+  fallback:
+    - 8.8.8.8
+    - 223.6.6.6
+    - 1.1.1.1
+    - tls://dns.rubyfish.cn:853
+    - tls://1.0.0.1:853
+    - tls://dns.google:853
+    - https://dns.rubyfish.cn/dns-query
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
+  fallback-filter:
+    geoip: true
+    ipcidr:
+      - 240.0.0.0/4
+
+proxies:
+  # - name: "WARP"
+  #   type: wireguard
+  #   server: engage.cloudflareclient.com
+  #   port: 2408
+  #   ip: "172.16.0.2/32"
+  #   ipv6: "2606::1/128"        # 自行替换
+  #   private-key: "private-key" # 自行替换
+  #   public-key: "public-key"   # 自行替换
+  #   udp: true
+  #   reserved: "abba"           # 自行替换
+  #   mtu: 1280
+  #   dialer-proxy: "dns"
+  #   remote-dns-resolve: true
+  #   dns:
+  #     - https://dns.cloudflare.com/dns-query
+
+proxy-groups:
+
+  - name: Proxies
+    type: select
+    proxies:
+      - 自动选择
+      - 手动选择
+
+  - name: 自动选择
+    <<: *urltest-interval
+    use:
+      - jichang1
+      - jichang2
+      
+  - name: 手动选择
+    type: select
+    proxies:
+      - 机场1
+      - 机场2
+
+
+  - name: 机场1
+    type: select
+    use:
+      - jichang1
+
+  - name: 机场2
+    type: select
+    use:
+      - jichang2
+  
+rule-providers:
+  reject:
+    type: http
+    behavior: domain
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/reject.txt"
+    path: ./profiles/ruleset/reject.yaml
+    interval: 86400
+
+  icloud:
+    type: http
+    behavior: domain
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/icloud.txt"
+    path: ./profiles/ruleset/icloud.yaml
+    interval: 86400
+
+  apple:
+    type: http
+    behavior: domain
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/apple.txt"
+    path: ./profiles/ruleset/apple.yaml
+    interval: 86400
+
+  google:
+    type: http
+    behavior: domain
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/google.txt"
+    path: ./profiles/ruleset/google.yaml
+    interval: 86400
+
+  proxy:
+    type: http
+    behavior: domain
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/proxy.txt"
+    path: ./profiles/ruleset/proxy.yaml
+    interval: 86400
+
+  direct:
+    type: http
+    behavior: domain
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt"
+    path: ./profiles/ruleset/direct.yaml
+    interval: 86400
+
+  private:
+    type: http
+    behavior: domain
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/private.txt"
+    path: ./profiles/ruleset/private.yaml
+    interval: 86400
+
+  gfw:
+    type: http
+    behavior: domain
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/gfw.txt"
+    path: ./profiles/ruleset/gfw.yaml
+    interval: 86400
+
+  greatfire:
+    type: http
+    behavior: domain
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/greatfire.txt"
+    path: ./profiles/ruleset/greatfire.yaml
+    interval: 86400
+
+  tld-not-cn:
+    type: http
+    behavior: domain
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/tld-not-cn.txt"
+    path: ./profiles/ruleset/tld-not-cn.yaml
+    interval: 86400
+
+  telegramcidr:
+    type: http
+    behavior: ipcidr
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/telegramcidr.txt"
+    path: ./profiles/ruleset/telegramcidr.yaml
+    interval: 86400
+
+  cncidr:
+    type: http
+    behavior: ipcidr
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/cncidr.txt"
+    path: ./profiles/ruleset/cncidr.yaml
+    interval: 86400
+
+  lancidr:
+    type: http
+    behavior: ipcidr
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/lancidr.txt"
+    path: ./profiles/ruleset/lancidr.yaml
+    interval: 86400
+
+  applications:
+    type: http
+    behavior: classical
+    url: "https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/applications.txt"
+    path: ./profiles/ruleset/applications.yaml
+    interval: 86400
+
+
+rules:
+ - DOMAIN-SUFFIX,coze.com,Proxies 
+ - DOMAIN-SUFFIX,bulianglin.com,Proxies
+ - DOMAIN-SUFFIX,macapp.org.cn,Proxies
+ - RULE-SET,applications,DIRECT
+ - RULE-SET,private,DIRECT
+#  - RULE-SET,reject,REJECT
+ - RULE-SET,icloud,DIRECT
+ - RULE-SET,apple,DIRECT
+ - RULE-SET,google,DIRECT
+ - RULE-SET,proxy,Proxies
+ - RULE-SET,direct,DIRECT
+ - RULE-SET,lancidr,DIRECT
+ - RULE-SET,cncidr,DIRECT
+ - RULE-SET,telegramcidr,Proxies
+ - GEOIP,CN,DIRECT
+ - MATCH,Proxies
+ 
