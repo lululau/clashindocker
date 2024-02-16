@@ -5,36 +5,14 @@ pr: &pr {type: select, proxies: [默认,香港,台湾,日本,新加坡,美国,�
 #这里是订阅更新和延迟测试相关的
 p: &p {type: http, interval: 86400, health-check: {enable: true, url: https://www.gstatic.com/generate_204, interval: 36000}}
 
-selectall: &select-all
-  type: select
-  use:
-  - allnodes
-######### 锚点 end #######
-
-urltestall: &urltest-all
-  type: url-test
-  url: 'http://www.gstatic.com/generate_204'
-  interval: 300
-  lazy: true
-  use:
-    - allnodes
-
-loadbalanceall: &loadbalance-all
-  type: load-balance
-  use:
-    - allnodes
-  url: 'http://www.gstatic.com/generate_204'
-  interval: 300
-  lazy: true
-  strategy: round-robin # or consistent-hashing
 
 urltestinterval: &urltest-interval
   type: url-test
   url: 'http://www.gstatic.com/generate_204'
   interval: 300
   lazy: true
-  use:
-    - allnodes
+######### 锚点 end #######
+
 # url 里填写自己的订阅,名称不能重复,path（文件位置）不能重复
 proxy-providers:
   

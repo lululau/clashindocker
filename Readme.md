@@ -2,6 +2,8 @@
 软路由，openwrt，是老生常谈的内容了。但是我更加喜欢all in one，而且不喜欢用虚拟机。每次装openwrt的主要目的也只是使用其中的clash。所以我就干脆直接用docker+clash来充当软路由的功能了。其中使用到的主要工具是docker,macvlan,clash(mihomo),iptables.
 
 # 创建macvlan网络
+为了能够让docker启动的容器作为家庭网络中的旁路由，因此需要创建macvlan网络。
+其中`192.168.3.1`为你局域网的网关，`em1`为你机器的网卡名称，这两个请根据实际情况修改。
 
 1. （可选）让docker监听ipv6。
     编辑etc/docker/daemon.json文件
@@ -41,7 +43,7 @@ sudo systemctl restart docker
 # 制作docker镜像并创建容器
 1. 获取代码
 ```bash
-https://github.com/UntaggedRui/clashindocker
+git clone https://github.com/UntaggedRui/clashindocker
 cd clashindocker
 cp example.yml config.yml
 ```
